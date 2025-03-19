@@ -2,6 +2,8 @@
 
 CarpaBot adalah bot Telegram yang dirancang untuk membantu kamu menemukan party atau squad teman bermain game. Dengan CarpaBot, kamu dapat dengan mudah mencari rekan-rekan untuk bermain game bersama melalui grup dan channel Telegram.
 
+[Coba bot](https://t.me/CariPartyBot)
+
 ## Fitur
 
 - **Pencarian Party/Squad:** Cari dan temukan pemain lain untuk bergabung dalam satu party atau squad.
