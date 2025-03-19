@@ -4,6 +4,8 @@ CarpaBot adalah bot Telegram yang dirancang untuk membantu kamu menemukan party 
 
 [Coba bot](https://t.me/CariPartyBot)
 
+![CarpaBot Logo](src/images/carpabot.webp)
+
 ## Fitur
 
 - **Pencarian Party/Squad:** Cari dan temukan pemain lain untuk bergabung dalam satu party atau squad.
