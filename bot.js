@@ -3,6 +3,7 @@ import { Telegraf, Markup } from 'telegraf';
 import { checkMembership, saveLastActiveTime, getLastActiveTime, containsBlacklistedWord } from './src/utils.js';
 import { log, error } from './src/logger.js';
 import { blacklistedWords } from './src/words_blacklist.js';
+import { terms } from './src/terms.js';
 
 saveLastActiveTime();
 
@@ -60,6 +61,15 @@ bot.action('help_kata_terlarang', (ctx) => {
 	ctx.reply(response);
 });
 
+// Handler untuk /ketentuan
+bot.command('ketentuan', (ctx) => {
+	let response = 'Ini adalah daftar ketentuan dalam menggunakan bot ini:\n\n';
+	terms.forEach((word) => {
+		response += `- ${word}\n`;
+	});
+	ctx.reply(response);
+});
+
 bot.on(['text', 'photo'], async (ctx) => {
 	const userId = ctx.from.id;
 	const username = ctx.from.username || 'Tidak ada username';
@@ -101,6 +111,10 @@ bot.on(['text', 'photo'], async (ctx) => {
 		let messageText = ctx.message.text || '';
 		let photos = ctx.message.photo ? [ctx.message.photo.slice(-1)[0]] : [];
 		let caption = ctx.message.caption || messageText || '';
+
+		if (!caption.includes('#carimember') && !caption.includes('#cariparty')) {
+			return ctx.reply('❌ Pesan harus mengandung prefix #carimember atau #cariparty untuk dikirimkan.');
+		}
 
 		// Cek apakah caption mengandung kata-kata terlarang (blacklist)
 		if (containsBlacklistedWord(caption)) {
