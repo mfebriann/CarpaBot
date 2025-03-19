@@ -1,1 +1,1 @@
-export const terms = ['Dilarang mengirimkan kata yang terlarang, bisa cek di /kata_terlarang', 'Hanya dapat menerima satu gambar saja', 'Gunakan prefix hashtag #carimember atau #cariparty pada pesan/caption kamu'];
+export const terms = ['Dilarang mengirimkan kata yang terlarang, bisa cek di /kata_terlarang', 'Hanya dapat menerima satu gambar saja', 'Gunakan prefix hashtag #carimember atau #cariparty pada pesan atau caption kamu'];

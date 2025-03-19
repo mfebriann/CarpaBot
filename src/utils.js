@@ -62,3 +62,9 @@ export const containsBlacklistedWord = (text) => {
 	const lowerText = text.toLowerCase();
 	return blacklistedWords.some((word) => lowerText.includes(word.toLowerCase()));
 };
+
+// Fungsi untuk mengekstrak link dari teks
+export const extractLinks = (text) => {
+	const urlRegex = /(https?:\/\/[^\s]+)/g;
+	return text.match(urlRegex) || [];
+};
