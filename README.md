@@ -60,8 +60,9 @@ Ikuti langkah-langkah berikut untuk mengatur dan menjalankan CarpaBot:
 ## Penggunaan
 
 - **/start** - Berkenalan dengan CarpaBot
-- **/kata_terlarang** - Daftar kata-kata terlarang yang tidak di-izinkan bot
 - **/help** - Panduan terkait bantuan untuk menggunakan bot ini
+- **/kata_terlarang** - Daftar kata-kata terlarang yang tidak di-izinkan bot
+- **/ketentuan** - Daftar ketentuan dalam menggunakan bot ini
 
 ## Kontak
 
