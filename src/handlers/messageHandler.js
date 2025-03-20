@@ -20,11 +20,13 @@ bot.on(['text', 'photo'], async (ctx) => {
 	const messageTimestamp = ctx.message.date * 1000; // Konversi ke ms
 	const lastActiveTime = getLastActiveTime();
 
+	if (ctx.chat.type !== 'private') return;
+
 	if (messageTimestamp < lastActiveTime) {
 		log(`Melewati pesan dari @${username} (${userId}) karena dikirim saat bot mati`);
 		return ctx.reply('ℹ️ Pesan ini dikirim saat bot sedang offline. Silakan kirim ulang pesan Anda.');
 	}
-	if (ctx.chat.type !== 'private') return;
+
 	if (isTesting && !allowedUsers.includes(userId)) {
 		log(`Akses ditolak untuk user ${userId} (@${username})`);
 		return ctx.reply('🚧 Bot sedang dalam perbaikan. Silahkan kembali lagi nanti ketika sudah selesai perbaikan.');
@@ -46,7 +48,7 @@ bot.on(['text', 'photo'], async (ctx) => {
 
 		// Pengecekan prefix: harus mengandung #carimember atau #cariparty
 		if (!caption.includes('#carimember') && !caption.includes('#cariparty')) {
-			return ctx.reply('❌ Pesan harus mengandung prefix #carimember atau #cariparty untuk dikirimkan.');
+			return ctx.reply('❌ Pesan harus mengandung ada hashtag #carimember atau #cariparty untuk dikirimkan.\n\nContoh: #cariparty Mabar yuk guys!');
 		}
 		// Pengecekan blacklist
 		if (containsBlacklistedWord(caption)) {
