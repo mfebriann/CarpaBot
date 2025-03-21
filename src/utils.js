@@ -109,3 +109,12 @@ export const determineTargetChannel = (caption) => {
 	// Default untuk #cariparty
 	return CHANNEL_ID;
 };
+
+// Fungsi untuk menentukan channel handle berdasarkan hashtag pada caption
+export const getChannelHandle = (caption) => {
+	const lowerCaption = caption.toLowerCase();
+	if (lowerCaption.includes('#event')) return '@partyml_event';
+	if (lowerCaption.includes('#carimember')) return '@nemu_sq';
+	if (lowerCaption.includes('#cariparty')) return '@partyml_promote';
+	return '';
+};

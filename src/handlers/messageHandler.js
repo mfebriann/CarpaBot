@@ -1,6 +1,6 @@
 import bot from '../botInstance.js';
 import { Markup } from 'telegraf';
-import { checkMembership, getLastActiveTime, containsBlacklistedWord, extractLinks, determineTargetChannel, sendToChannel } from '../utils.js';
+import { checkMembership, getLastActiveTime, containsBlacklistedWord, extractLinks, determineTargetChannel, sendToChannel, getChannelHandle } from '../utils.js';
 import { log, error } from '../logger.js';
 import { whitelistedLinks } from '../whitelist_link.js';
 
@@ -147,21 +147,34 @@ bot.on(['text', 'photo'], async (ctx) => {
 		}
 		log(`======================`);
 
+		// Menambahkan prefix sudah diteruskan ke: nama channel
+		const channelHandle = getChannelHandle(caption);
+		console.log(`Channel handle yang ditentukan: ${channelHandle}`);
+		const groupCaption = `${caption}\n\nPesan diteruskan dari channel: ${channelHandle}`;
+
 		// Pengiriman pesan teks atau foto tunggal
 		if (!photos.length) {
-			const groupMessage = await ctx.telegram.sendMessage(GROUP_ID, caption);
+			const groupMessage = await ctx.telegram.sendMessage(GROUP_ID, groupCaption);
 			groupMsgId = groupMessage.message_id;
 			await sendToChannel(ctx, targetChannel, caption, groupMsgId);
 		} else {
+			// Payload untuk grup: gunakan groupCaption (caption + prefix)
 			const mediaPayloadGroup = photos.map((photo, index) => ({
+				type: 'photo',
+				media: photo.file_id,
+				caption: index === 0 ? groupCaption : undefined,
+			}));
+
+			// Payload untuk channel: gunakan caption asli
+			const mediaPayloadChannel = photos.map((photo, index) => ({
 				type: 'photo',
 				media: photo.file_id,
 				caption: index === 0 ? caption : undefined,
 			}));
+
 			const groupMessages = await ctx.telegram.sendMediaGroup(GROUP_ID, mediaPayloadGroup);
 			groupMsgId = groupMessages[0].message_id;
-			// Kirim media group ke target channel
-			const channelMessages = await ctx.telegram.sendMediaGroup(targetChannel, mediaPayloadGroup);
+			const channelMessages = await ctx.telegram.sendMediaGroup(targetChannel, mediaPayloadChannel);
 			const groupNumericId = GROUP_ID.replace('-100', '');
 			const commentUrl = `https://t.me/c/${groupNumericId}/${groupMsgId}?thread=${groupMsgId}`;
 			await ctx.telegram.editMessageReplyMarkup(targetChannel, channelMessages[0].message_id, null, {
