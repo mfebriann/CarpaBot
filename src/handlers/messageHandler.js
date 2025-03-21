@@ -1,12 +1,11 @@
-// src/handlers/messageHandler.js
 import bot from '../botInstance.js';
 import { Markup } from 'telegraf';
-import { checkMembership, saveLastActiveTime, getLastActiveTime, containsBlacklistedWord, extractLinks } from '../utils.js';
+import { checkMembership, getLastActiveTime, containsBlacklistedWord, extractLinks, determineTargetChannel, sendToChannel } from '../utils.js';
 import { log, error } from '../logger.js';
 import { whitelistedLinks } from '../whitelist_link.js';
 
 const GROUP_ID = process.env.GROUP_ID;
-const CHANNEL_ID = process.env.CHANNEL_ID;
+
 const isTesting = false;
 const allowedUsers = [339890451];
 
@@ -32,7 +31,7 @@ bot.on(['text', 'photo'], async (ctx) => {
 		return ctx.reply('🚧 Bot sedang dalam perbaikan. Silahkan kembali lagi nanti ketika sudah selesai perbaikan.');
 	}
 
-	const { isGroupMember, isChannelMember } = await checkMembership(bot, userId, GROUP_ID, CHANNEL_ID);
+	const { isGroupMember, isChannelMember } = await checkMembership(bot, userId);
 	if (!isTesting && (!isGroupMember || !isChannelMember)) {
 		log(`User ${userId} (@${username}) belum join grup/channel`);
 		return ctx.reply(
@@ -46,16 +45,17 @@ bot.on(['text', 'photo'], async (ctx) => {
 		let photos = ctx.message.photo ? [ctx.message.photo.slice(-1)[0]] : [];
 		let caption = ctx.message.caption || messageText || '';
 
-		// Pengecekan prefix: harus mengandung #carimember atau #cariparty
-		if (!caption.includes('#carimember') && !caption.includes('#cariparty')) {
-			return ctx.reply('❌ Pesan harus mengandung ada hashtag #carimember atau #cariparty untuk dikirimkan.\n\nContoh: #cariparty Mabar yuk guys!');
+		// Cek keberadaan salah satu hashtag (case‑insensitive)
+		const lowerCaption = caption.toLowerCase();
+		if (!lowerCaption.includes('#carimember') && !lowerCaption.includes('#cariparty') && !lowerCaption.includes('#event')) {
+			return ctx.reply('❌ Pesan harus mengandung hashtag #carimember, #cariparty, atau #event untuk dikirimkan.\n\nContoh: #cariparty Mabar yuk guys!');
 		}
-		// Pengecekan blacklist
+		// Cek blacklist
 		if (containsBlacklistedWord(caption)) {
 			log(`Pesan dari @${username} mengandung kata-kata terlarang: ${caption}`);
 			return ctx.reply('❌ Pesan Anda mengandung kata-kata terlarang dan tidak dapat promote.');
 		}
-		// Pengecekan link (whitelist)
+		// Cek link (whitelist)
 		const linksInMessage = extractLinks(caption);
 		for (const link of linksInMessage) {
 			if (!whitelistedLinks.some((prefix) => link.startsWith(prefix))) {
@@ -63,7 +63,25 @@ bot.on(['text', 'photo'], async (ctx) => {
 			}
 		}
 
-		// Jika pesan berupa album (media_group_id)
+		// Tentukan channel tujuan secara eksklusif
+		// Jika pesan mengandung #event atau #carimember, maka targetChannel bukan CHANNEL_ID
+		const targetChannel = determineTargetChannel(caption);
+		console.log(`Determined target channel: ${targetChannel}`);
+
+		// Add the chat verification:
+		try {
+			// Try to get chat info
+			const chatInfo = await bot.telegram.getChat(targetChannel);
+			console.log(`Chat exists: ${chatInfo.title}`);
+		} catch (e) {
+			console.error(`Cannot access chat ${targetChannel}: ${e.message}`);
+			return ctx.reply('❌ Bot tidak dapat mengakses channel tujuan. Silakan hubungi admin.');
+		}
+
+		// Variabel untuk menyimpan ID pesan dari grup sebagai acuan URL komentar
+		let groupMsgId;
+
+		// Jika pesan berupa album (media_group)
 		if (ctx.message.media_group_id) {
 			const mediaGroup = ctx.message.media_group_id;
 			if (!global.mediaGroups[mediaGroup]) {
@@ -91,20 +109,14 @@ bot.on(['text', 'photo'], async (ctx) => {
 					const mediaPayloadGroup = mediaData.photos.map((photo, index) => ({
 						type: 'photo',
 						media: photo.file_id,
-						caption: index === 0 ? `${mediaData.caption}\n\nPesan dari: @${mediaData.userInfo.username}` : undefined,
-					}));
-					const mediaPayloadChannel = mediaData.photos.map((photo, index) => ({
-						type: 'photo',
-						media: photo.file_id,
 						caption: index === 0 ? mediaData.caption : undefined,
 					}));
+					// Selalu kirim pesan ke GROUP_ID (untuk referensi komentar)
 					const groupMessages = await ctx.telegram.sendMediaGroup(GROUP_ID, mediaPayloadGroup);
-					const channelMessages = await ctx.telegram.sendMediaGroup(CHANNEL_ID, mediaPayloadChannel);
-					const groupNumericId = GROUP_ID.replace('-100', '');
-					const commentUrl = `https://t.me/c/${groupNumericId}/${groupMessages[0].message_id}?thread=${groupMessages[0].message_id}`;
-					await ctx.telegram.editMessageReplyMarkup(CHANNEL_ID, channelMessages[0].message_id, null, {
-						inline_keyboard: [[{ text: 'Komentar', url: commentUrl }]],
-					});
+					groupMsgId = groupMessages[0].message_id;
+					// Kirim ke channel tujuan (misalnya CHANNEL_ID_EVENT atau CHANNEL_ID_CARISQUAD)
+					await sendToChannel(ctx, targetChannel, mediaData.caption, groupMsgId);
+
 					log(`Media Group berhasil dikirim ke grup & channel dari @${mediaData.userInfo.username}`);
 					try {
 						await bot.telegram.sendMessage(mediaData.userInfo.userId, '✅ Media group berhasil dikirim!');
@@ -135,37 +147,29 @@ bot.on(['text', 'photo'], async (ctx) => {
 		}
 		log(`======================`);
 
-		// Pengiriman pesan: teks atau media
+		// Pengiriman pesan teks atau foto tunggal
 		if (!photos.length) {
-			const groupCaption = `${caption}\n\nPesan dari: @${username}`;
-			const groupMessage = await ctx.telegram.sendMessage(GROUP_ID, groupCaption);
-			const sentMessage = await ctx.telegram.sendMessage(CHANNEL_ID, caption, { parse_mode: 'Markdown' });
-			const groupNumericId = GROUP_ID.replace('-100', '');
-			const commentUrl = `https://t.me/c/${groupNumericId}/${groupMessage.message_id}?thread=${groupMessage.message_id}`;
-			await ctx.telegram.editMessageReplyMarkup(CHANNEL_ID, sentMessage.message_id, null, {
-				inline_keyboard: [[{ text: 'Komentar', url: commentUrl }]],
-			});
-			log(`Pesan teks berhasil dikirim ke grup & channel dari @${username}`);
+			const groupMessage = await ctx.telegram.sendMessage(GROUP_ID, caption);
+			groupMsgId = groupMessage.message_id;
+			await sendToChannel(ctx, targetChannel, caption, groupMsgId);
 		} else {
 			const mediaPayloadGroup = photos.map((photo, index) => ({
-				type: 'photo',
-				media: photo.file_id,
-				caption: index === 0 ? `${caption}\n\nPesan dari: @${username}` : undefined,
-			}));
-			const mediaPayloadChannel = photos.map((photo, index) => ({
 				type: 'photo',
 				media: photo.file_id,
 				caption: index === 0 ? caption : undefined,
 			}));
 			const groupMessages = await ctx.telegram.sendMediaGroup(GROUP_ID, mediaPayloadGroup);
-			const channelMessages = await ctx.telegram.sendMediaGroup(CHANNEL_ID, mediaPayloadChannel);
+			groupMsgId = groupMessages[0].message_id;
+			// Kirim media group ke target channel
+			const channelMessages = await ctx.telegram.sendMediaGroup(targetChannel, mediaPayloadGroup);
 			const groupNumericId = GROUP_ID.replace('-100', '');
-			const commentUrl = `https://t.me/c/${groupNumericId}/${groupMessages[0].message_id}?thread=${groupMessages[0].message_id}`;
-			await ctx.telegram.editMessageReplyMarkup(CHANNEL_ID, channelMessages[0].message_id, null, {
-				inline_keyboard: [[{ text: 'Komentar', url: commentUrl }]],
+			const commentUrl = `https://t.me/c/${groupNumericId}/${groupMsgId}?thread=${groupMsgId}`;
+			await ctx.telegram.editMessageReplyMarkup(targetChannel, channelMessages[0].message_id, null, {
+				inline_keyboard: [[{ text: 'Go to message', url: commentUrl }]],
 			});
-			log(`Media Group berhasil dikirim ke grup & channel dari @${username}`);
 		}
+
+		log(`Pesan berhasil dikirim ke grup & channel dari @${username}`);
 		ctx.reply('✅ Pesan berhasil dikirim!');
 	} catch (e) {
 		error(`ERROR untuk @${username} (${userId}): ${e.message}`);
