@@ -1,3 +1,0 @@
-export const blacklistedWords = [
- // Masukkan daftar kata-kata terlarang
-];

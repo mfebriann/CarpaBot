@@ -2,4 +2,3 @@
 node_modules/
 src/logs
 last_active.json
-src/words_blacklist.js
