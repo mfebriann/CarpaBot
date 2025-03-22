@@ -36,7 +36,7 @@ bot.on(['text', 'photo'], async (ctx) => {
 		log(`User ${userId} (@${username}) belum join grup/channel`);
 		return ctx.reply(
 			'❌ Anda harus bergabung di grup dan channel sebelum menggunakan bot ini.\n\nKlik tombol di bawah untuk bergabung:',
-			Markup.inlineKeyboard([[Markup.button.url('📢 Gabung Channel', `https://t.me/partyml_promote`), Markup.button.url('💬 Gabung Grup', `https://t.me/party_ml`)]])
+			Markup.inlineKeyboard([[Markup.button.url('📢 Gabung Channel', `https://t.me/carpbot_channel`), Markup.button.url('💬 Gabung Grup', `https://t.me/party_ml`)]])
 		);
 	}
 
