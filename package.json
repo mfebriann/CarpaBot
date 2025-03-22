@@ -1,7 +1,7 @@
 {
-	"name": "bot-tele",
+	"name": "CarpaBot",
 	"version": "1.0.0",
-	"description": "",
+	"description": "Bot untuk promote jika player Mobile Legends yang sedang cari party-an atau cari squad",
 	"main": "index.js",
 	"type": "module",
 	"scripts": {
@@ -10,7 +10,7 @@
 		"main": "bot.js"
 	},
 	"keywords": [],
-	"author": "",
+	"author": "mfebriann",
 	"license": "ISC",
 	"dependencies": {
 		"dotenv": "^16.4.7",
