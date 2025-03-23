@@ -20,7 +20,7 @@ import './src/handlers/messageHandler.js';
 import { sendScheduledMessage } from './src/tasks/sendScheduledMessage.js';
 
 // Start scheduled message setiap 20 menit dengan log tiap 5 menit
-const { logInterval, messageInterval } = sendScheduledMessage(bot, process.env.GROUP_ID, 20);
+const { logInterval, messageInterval } = sendScheduledMessage(bot, process.env.GROUP_ID, 60);
 
 // Handler shutdown yang bersih
 function handleShutdown(signal) {

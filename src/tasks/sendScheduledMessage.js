@@ -1,5 +1,5 @@
 // src/tasks/scheduledMessage.js
-export const sendScheduledMessage = (bot, chatId, intervalMinutes = 20) => {
+export const sendScheduledMessage = (bot, chatId, intervalMinutes) => {
 	const message = 'Jika kalian ingin mencari party atau member squad dan melihat event yang sedang diadakan di grup ini. Kalian bisa menggunakan bot ini ya, atau @CariPartyBot';
 
 	const intervalMs = intervalMinutes * 60 * 1000;
