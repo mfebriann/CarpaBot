@@ -9,6 +9,7 @@ const GROUP_ID = process.env.GROUP_ID;
 const CHANNEL_ID = process.env.CHANNEL_ID; // Default untuk #cariparty
 const CHANNEL_ID_CARISQUAD = process.env.CHANNEL_ID_CARISQUAD;
 const CHANNEL_ID_EVENT = process.env.CHANNEL_ID_EVENT;
+const CHANNEL_ID_OFFICIAL = process.env.CHANNEL_ID_OFFICIAL;
 
 /**
  * Simpan waktu terakhir bot aktif
@@ -52,7 +53,7 @@ export const checkMembership = async (bot, userId) => {
 		const isGroupMember = ['member', 'administrator', 'creator'].includes(groupMember.status);
 
 		// Cek keanggotaan di Channel
-		const channelMember = await bot.telegram.getChatMember(CHANNEL_ID, userId);
+		const channelMember = await bot.telegram.getChatMember(CHANNEL_ID_OFFICIAL, userId);
 		const isChannelMember = ['member', 'administrator', 'creator'].includes(channelMember.status);
 
 		return { isGroupMember, isChannelMember };
