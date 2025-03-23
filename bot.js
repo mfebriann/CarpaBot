@@ -7,31 +7,40 @@ import bot from './src/botInstance.js';
 // Pastikan variabel global untuk media groups tersedia
 if (!global.mediaGroups) global.mediaGroups = {};
 
+// Simpan waktu aktif terakhir saat start bot
 saveLastActiveTime();
 
-// Impor modul command & handler (setiap file akan langsung mendaftarkan handler ke bot)
+// Impor modul command & handler
 import './src/commands/start.js';
 import './src/commands/kata_terlarang.js';
 import './src/commands/link.js';
 import './src/commands/help.js';
 import './src/commands/ketentuan.js';
 import './src/handlers/messageHandler.js';
+import { sendScheduledMessage } from './src/tasks/sendScheduledMessage.js';
 
-// Shutdown handler
-function handleShutdown() {
-	log('Bot sedang dimatikan...');
+// Start scheduled message setiap 20 menit dengan log tiap 5 menit
+const { logInterval, messageInterval } = sendScheduledMessage(bot, process.env.GROUP_ID, 20);
+
+// Handler shutdown yang bersih
+function handleShutdown(signal) {
+	log(`🛑 Bot sedang dimatikan (${signal})...`);
 	saveLastActiveTime();
-	bot.stop('SIGTERM');
+	clearInterval(logInterval);
+	clearInterval(messageInterval);
+	bot.stop(signal);
+	process.exit(0);
 }
-process.on('SIGINT', handleShutdown);
-process.on('SIGTERM', handleShutdown);
+
+process.once('SIGINT', () => handleShutdown('SIGINT'));
+process.once('SIGTERM', () => handleShutdown('SIGTERM'));
 
 // Launch bot
 bot.launch().then(() => {
 	const startTime = new Date().toISOString();
 	const lastActive = new Date(getLastActiveTime()).toISOString();
-	log(`Bot berjalan dalam mode: ${process.env.IS_TESTING ? 'PRIVATE' : 'PUBLIC'}`);
-	log(`Waktu sekarang: ${startTime}`);
-	log(`Timestamp terakhir aktif: ${lastActive}`);
-	log(`Bot siap menerima pesan. Pesan yang dikirim sebelum ${lastActive} akan diabaikan.`);
+	log(`🚀 Bot berjalan dalam mode: ${process.env.IS_TESTING ? 'PRIVATE' : 'PUBLIC'}`);
+	log(`🕒 Waktu sekarang: ${startTime}`);
+	log(`📅 Timestamp terakhir aktif: ${lastActive}`);
+	log(`✅ Bot siap menerima pesan. Pesan sebelum ${lastActive} akan diabaikan.`);
 });
