@@ -150,7 +150,7 @@ bot.on(['text', 'photo'], async (ctx) => {
 		// Menambahkan prefix sudah diteruskan ke: nama channel
 		const channelHandle = getChannelHandle(caption);
 		console.log(`Channel handle yang ditentukan: ${channelHandle}`);
-		const groupCaption = `${caption}\n\nPesan diteruskan dari channel: ${channelHandle}`;
+		const groupCaption = `${caption}\n\nPesan dikirim dari: @${username}\nPesan akan diteruskan ke channel: ${channelHandle}`;
 
 		// Pengiriman pesan teks atau foto tunggal
 		if (!photos.length) {
