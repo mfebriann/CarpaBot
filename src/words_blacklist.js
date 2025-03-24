@@ -24,4 +24,6 @@ export const blacklistedWords = [
 	'promo',
 	'jual',
 	'beli',
+	'wdp',
+	'rw',
 ];
